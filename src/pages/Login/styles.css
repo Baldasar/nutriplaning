@@ -1,0 +1,26 @@
+.container {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.padding-bottom-15 {
+    padding-bottom: 15px;
+}
+
+.version-container {
+    color: black;
+    font-size: small;
+    font-weight: 600;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.button-container ion-button {
+    flex: 1;
+}

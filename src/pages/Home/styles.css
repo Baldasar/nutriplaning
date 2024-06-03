@@ -1,0 +1,62 @@
+ion-badge {
+    --padding-end: 5px;
+    --padding-start: 5px;
+    width: 40px;
+    text-align: center;
+    margin-right: 5px;
+    margin-left: 5px;
+}
+
+.grid-home {
+    display: grid;
+    height: 100%;
+    grid-template-rows: 17% 75% 8%;
+}
+
+.card-container {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.total-container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+    border: 1.5px solid #000;
+    margin: 0 10px;
+}
+
+.total-item {
+    text-align: center;
+    padding: 10px;
+}
+
+.total-item h3 {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.total-item p {
+    font-size: 14px;
+    margin: 0;
+}
+
+.color-carbo {
+    color: #2dd36f;
+}
+
+.color-gord {
+    color: #eb445a;
+}
+
+.color-proteina {
+    color: #3880ff;
+}
+
+.card-content {
+    padding: 0;
+}
