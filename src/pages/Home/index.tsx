@@ -6,7 +6,11 @@ import {
   IonCardContent,
   IonCardHeader,
   IonCardTitle,
+  IonCheckbox,
   IonContent,
+  IonFab,
+  IonFabButton,
+  IonFabList,
   IonIcon,
   IonInput,
   IonItem,
@@ -18,7 +22,17 @@ import {
   IonSegmentButton,
   useIonAlert,
 } from "@ionic/react";
-import { home, logOut, person } from "ionicons/icons";
+import {
+  add,
+  checkmark,
+  close,
+  cog,
+  home,
+  logOut,
+  pencil,
+  person,
+  trash,
+} from "ionicons/icons";
 import { useHistory } from "react-router";
 import LocalStorageHelper from "../../components/LocalStorageHelper";
 
@@ -29,31 +43,31 @@ const Home = () => {
 
   const [presentAlert] = useIonAlert();
 
-  const { getItem, clear } = LocalStorageHelper();
+  const { setItem, getItem, clear } = LocalStorageHelper();
 
   const [loading, setLoading] = useState(false);
 
+  const [userId, setUserId] = useState<any>(null);
   const [selectedSegment, setSelectedSegment] = useState<any>("2");
   const [refeicoes, setRefeicoes] = useState<any>([]);
   const [refeicoesGeradas, setRefeicoesGeradas] = useState<any>([]);
+  const [toggleEdit, setToggleEdit] = useState(false);
 
-  const calcularTotais = () => {
-    let totalCarboidrato = 0;
-    let totalProteina = 0;
-    let totalGordura = 0;
+  const [totalCarboidrato, setTotalCarboidrato] = useState(0);
+  const [totalProteina, setTotalProteina] = useState(0);
+  const [totalGordura, setTotalGordura] = useState(0);
+  const [totalCalorias, setTotalCalorias] = useState(0);
 
-    refeicoesGeradas.forEach((refeicao: any) => {
-      refeicao.comidas.forEach((comida: any) => {
-        totalCarboidrato += comida.carboidrato;
-        totalProteina += comida.proteina;
-        totalGordura += comida.gordura;
-      });
-    });
-
-    return { totalCarboidrato, totalProteina, totalGordura };
+  const deselecionarTodasComidas = () => {
+    const updatedRefeicoes = refeicoesGeradas.map((ref: any) => ({
+      ...ref,
+      comidas: ref.comidas.map((com: any) => ({
+        ...com,
+        selecionado: false,
+      })),
+    }));
+    setRefeicoesGeradas(updatedRefeicoes);
   };
-
-  const { totalCarboidrato, totalProteina, totalGordura } = calcularTotais();
 
   const confirmLogout = () => {
     presentAlert({
@@ -69,9 +83,19 @@ const Home = () => {
         },
         {
           text: "Sair",
-          handler: () => {
-            clear();
-            history.push("/");
+          handler: async () => {
+            try {
+              const apiUrl = 'http://192.168.100.222:8000';
+
+              await fetch(`${apiUrl}/api/logoutUsuario`, {
+                method: "GET",
+              });
+            } catch (error) {
+              console.error(error);
+            } finally {
+              clear();
+              history.push("/");
+            }
           },
         },
       ],
@@ -94,135 +118,119 @@ const Home = () => {
     }
   };
 
+  const gerarRefeicoesParcial = async () => {
+    const selectedIds: any = [];
+
+    refeicoesGeradas.forEach((refeicao: any) => {
+      refeicao.comidas.forEach((comida: any) => {
+        if (comida.selecionado) {
+          selectedIds.push(comida.id);
+        }
+      });
+    });
+
+    console.log(selectedIds);
+  };
+
+  const transformarDados = (res: any) => {
+    if (!res || !res.refeicoes || !Array.isArray(res.refeicoes)) {
+      throw new Error("Parâmetro inválido");
+    }
+
+    const resultado: any = [];
+
+    let caloriasTotais = res.base_atividade
+    let carboidratoTotais = res.macros_necessarios.carboidrato;
+    let proteinaTotais = res.macros_necessarios.proteina;
+    let gorduraTotais = res.macros_necessarios.lipideos;
+
+    res.refeicoes.forEach((refeicao: any) => {
+      const comidas: any = [];
+
+      refeicao.alimentos.forEach((alimento: any) => {
+        comidas.push({
+          id: alimento.id,
+          nome: alimento.descricaoAlimento,
+          quantidade: alimento.quantidade.toFixed(2),
+          carboidrato: alimento.macroNutrientes.carboidrato.toFixed(2),
+          proteina: alimento.macroNutrientes.proteina.toFixed(2),
+          gordura: alimento.macroNutrientes.lipideos.toFixed(2),
+          selecionado: false,
+        });
+      });
+
+      resultado.push({
+        refeicao: resultado.length + 1,
+        comidas,
+      });
+    });
+
+    return {
+      ref: resultado,
+      totais: { calorias: caloriasTotais.toFixed(2), carboidrato: carboidratoTotais.toFixed(2), proteina: proteinaTotais.toFixed(2), gordura: gorduraTotais.toFixed(2)},
+    };
+  };
+
   const gerarRefeicoes = async () => {
     setLoading(true);
-
     setRefeicoes([]);
 
+    const params = new FormData();
+    params.append('id_pessoa', "12");
+    params.append('email', 'lucaspaquelin@gmail.com');
+    params.append('senha', '123456');
+
+    refeicoes.forEach((refeicao: any) => {
+      params.append('porcentagem[]', refeicao.inputValue);
+    });
+
+    const apiUrl = 'http://192.168.100.222:8000';
+    
+    const response = await fetch(`${apiUrl}/api/gerarRefeicoes`, {
+      method: "POST",
+      body: params
+    });
+
+    const res = await response.json();
+
+    const { ref, totais } = transformarDados(res);
+
+    setTotalCalorias(Number(totais.calorias));
+    setTotalCarboidrato(Number(totais.carboidrato));
+    setTotalProteina(Number(totais.proteina));
+    setTotalGordura(Number(totais.gordura));
+
     setTimeout(() => {
-      setRefeicoesGeradas([
-        {
-          refeicao: 1,
-          comidas: [
-            {
-              id: 8,
-              nome: "Comida 8",
-              quantidade: 140,
-              carboidrato: 24,
-              proteina: 8,
-              gordura: 10,
-            },
-            {
-              id: 12,
-              nome: "Comida 12",
-              quantidade: 210,
-              carboidrato: 38,
-              proteina: 14,
-              gordura: 16,
-            },
-            {
-              id: 2,
-              nome: "Comida 2",
-              quantidade: 150,
-              carboidrato: 30,
-              proteina: 10,
-              gordura: 12,
-            },
-          ],
-        },
-        {
-          refeicao: 2,
-          comidas: [
-            {
-              id: 1,
-              nome: "Comida 1",
-              quantidade: 100,
-              carboidrato: 22,
-              proteina: 8,
-              gordura: 8,
-            },
-            {
-              id: 4,
-              nome: "Comida 4",
-              quantidade: 200,
-              carboidrato: 35,
-              proteina: 12,
-              gordura: 15,
-            },
-            {
-              id: 6,
-              nome: "Comida 6",
-              quantidade: 130,
-              carboidrato: 20,
-              proteina: 6,
-              gordura: 7,
-            },
-          ],
-        },
-        {
-          refeicao: 3,
-          comidas: [
-            {
-              id: 3,
-              nome: "Comida 3",
-              quantidade: 120,
-              carboidrato: 25,
-              proteina: 7,
-              gordura: 9,
-            },
-            {
-              id: 5,
-              nome: "Comida 5",
-              quantidade: 180,
-              carboidrato: 28,
-              proteina: 9,
-              gordura: 11,
-            },
-            {
-              id: 7,
-              nome: "Comida 7",
-              quantidade: 170,
-              carboidrato: 32,
-              proteina: 11,
-              gordura: 13,
-            },
-          ],
-        },
-        {
-          refeicao: 4,
-          comidas: [
-            {
-              id: 9,
-              nome: "Comida 9",
-              quantidade: 160,
-              carboidrato: 27,
-              proteina: 10,
-              gordura: 12,
-            },
-            {
-              id: 11,
-              nome: "Comida 11",
-              quantidade: 110,
-              carboidrato: 18,
-              proteina: 5,
-              gordura: 6,
-            },
-            {
-              id: 10,
-              nome: "Comida 10",
-              quantidade: 190,
-              carboidrato: 33,
-              proteina: 13,
-              gordura: 14,
-            },
-          ],
-        },
-      ]);
+      setRefeicoesGeradas(ref);
+      setItem("refeicoesGeradas", JSON.stringify(ref));
+      setItem("totais", JSON.stringify(totais));
     }, 1000);
 
     setTimeout(() => {
       setLoading(false);
     }, 2000);
+  };
+
+  const resetRefeicoes = () => {
+    presentAlert({
+      header: "Resetar Refeições",
+      message: "Deseja realmente resetar as refeições?",
+      buttons: [
+        {
+          text: "Cancelar",
+          role: "cancel",
+        },
+        {
+          text: "Resetar",
+          handler: () => {
+            setRefeicoes([]);
+            setRefeicoesGeradas([]);
+            setItem("refeicoesGeradas", JSON.stringify([]));
+            setItem("totais", JSON.stringify({}));
+          },
+        },
+      ],
+    });
   };
 
   const handleAddRefeicao = () => {
@@ -231,6 +239,11 @@ const Home = () => {
       inputValue: 0,
     };
     setRefeicoes([...refeicoes, novaRefeicao]);
+
+    setTimeout(() => {
+      const element = document.querySelector(".card-container");
+      element?.scrollTo(0, element.scrollHeight);
+    },200);
   };
 
   const handleRemoveRefeicao = (id: number) => {
@@ -241,10 +254,29 @@ const Home = () => {
   };
 
   useEffect(() => {
-    const userId = getItem("userId");
+    const id = getItem("userId");
 
-    if (!userId) {
+    if (!id) {
       history.push("/login");
+      return;
+    }
+
+    setUserId(id);
+
+    const refeicoesGeradas = getItem("refeicoesGeradas");
+    const totais = getItem("totais");
+
+    if (totais) {
+      const { calorias, carboidrato, proteina, gordura } = JSON.parse(totais);
+
+      setTotalCalorias(calorias);
+      setTotalCarboidrato(carboidrato);
+      setTotalProteina(proteina);
+      setTotalGordura(gordura);
+    }
+
+    if (refeicoesGeradas) {
+      setRefeicoesGeradas(JSON.parse(refeicoesGeradas));
     }
   }, []);
 
@@ -257,26 +289,67 @@ const Home = () => {
           <h2 className="text-center">Plano Alimentar</h2>
           {!refeicoesGeradas.length ? (
             <>
-              <IonButton
-                shape="round"
-                expand="full"
-                onClick={handleAddRefeicao}
-              >
-                Adicionar refeição
-              </IonButton>
+              <IonFab className="fab-add">
+                <IonFabButton onClick={handleAddRefeicao}>
+                  <IonIcon icon={add}></IonIcon>
+                </IonFabButton>
+              </IonFab>
+
               {refeicoes.length > 0 && (
-                <IonButton
-                  shape="round"
-                  expand="full"
-                  color={"success"}
-                  onClick={gerarRefeicoes}
-                >
-                  Gerar refeição
-                </IonButton>
+                <IonFab className="fab-generate">
+                  <IonFabButton color={"success"} onClick={gerarRefeicoes}>
+                    <IonIcon color="light" icon={checkmark}></IonIcon>
+                  </IonFabButton>
+                </IonFab>
               )}
             </>
           ) : (
             <>
+              {toggleEdit ? (
+                <>
+                  <IonFab className="fab-save">
+                    <IonFabButton
+                      color={"success"}
+                      onClick={gerarRefeicoesParcial}
+                    >
+                      <IonIcon color="light" icon={checkmark}></IonIcon>
+                    </IonFabButton>
+                  </IonFab>
+
+                  <IonFab className="fab-reset">
+                    <IonFabButton
+                      color={"medium"}
+                      onClick={() => {
+                        deselecionarTodasComidas();
+                        setToggleEdit(false);
+                      }}
+                    >
+                      <IonIcon icon={close}></IonIcon>
+                    </IonFabButton>
+                  </IonFab>
+                </>
+              ) : (
+                <IonFab className="fab-config">
+                  <IonFabButton color={"medium"} onClick={handleAddRefeicao}>
+                    <IonIcon icon={cog}></IonIcon>
+                  </IonFabButton>
+                  <IonFabList side="top">
+                    <IonFabButton
+                      color={"warning"}
+                      onClick={() => setToggleEdit(true)}
+                    >
+                      <IonIcon color="light" icon={pencil}></IonIcon>
+                    </IonFabButton>
+                    <IonFabButton
+                      onClick={() => resetRefeicoes()}
+                      color={"danger"}
+                    >
+                      <IonIcon color="light" icon={trash}></IonIcon>
+                    </IonFabButton>
+                  </IonFabList>
+                </IonFab>
+              )}
+
               <div className="total-container">
                 <div className="total-item">
                   <h3 className="color-carbo">Carboidratos</h3>
@@ -292,7 +365,7 @@ const Home = () => {
                 </div>
                 <div className="total-item">
                   <h3>Calorias</h3>
-                  <p>2100</p>
+                  <p>{totalCalorias}</p>
                 </div>
               </div>
             </>
@@ -364,22 +437,56 @@ const Home = () => {
                   <IonCardContent className="card-content">
                     <IonList>
                       {refeicao.comidas.map((comida: any) => (
-                        <IonItem key={comida.id}>
+                        <IonItem
+                          key={comida.id}
+                          onClick={() => {
+                            const updatedRefeicoes = refeicoesGeradas.map(
+                              (ref: any) =>
+                                ref.refeicao === refeicao.refeicao
+                                  ? {
+                                      ...ref,
+                                      comidas: ref.comidas.map((com: any) =>
+                                        com.id === comida.id
+                                          ? {
+                                              ...com,
+                                              selecionado: !com.selecionado,
+                                            }
+                                          : com
+                                      ),
+                                    }
+                                  : ref
+                            );
+                            setRefeicoesGeradas(updatedRefeicoes);
+                          }}
+                        >
+                          {toggleEdit && (
+                            <IonCheckbox
+                              slot="start"
+                              checked={comida.selecionado}
+                            />
+                          )}
+
                           <IonLabel>
                             <h2>{comida.nome}</h2>
-                            <p>Qntd: {comida.quantidade}g</p>
+                            {!toggleEdit && <p>Qntd: {comida.quantidade}g</p>}
                           </IonLabel>
-                          <div className="badge-container">
-                            <IonBadge className="badge-item" color={"success"}>
-                              {comida.carboidrato}
-                            </IonBadge>
-                            <IonBadge className="badge-item">
-                              {comida.proteina}
-                            </IonBadge>
-                            <IonBadge className="badge-item" color={"danger"}>
-                              {comida.gordura}
-                            </IonBadge>
-                          </div>
+
+                          {!toggleEdit && (
+                            <div className="badge-container">
+                              <IonBadge
+                                className="badge-item"
+                                color={"success"}
+                              >
+                                {comida.carboidrato}
+                              </IonBadge>
+                              <IonBadge className="badge-item">
+                                {comida.proteina}
+                              </IonBadge>
+                              <IonBadge className="badge-item" color={"danger"}>
+                                {comida.gordura}
+                              </IonBadge>
+                            </div>
+                          )}
                         </IonItem>
                       ))}
                     </IonList>

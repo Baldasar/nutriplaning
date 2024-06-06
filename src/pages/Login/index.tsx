@@ -31,15 +31,29 @@ const Login = () => {
 
     try {
       const formData = new FormData();
-      formData.append('email', email);
-      formData.append('senha', senha);
-      
-      const response = await fetch('http://localhost:8000/api/loginUsuario', {
+      formData.append("email", email);
+      formData.append("senha", senha);
+      formData.append("id_pessoa", "2");
+
+      const apiUrl = 'http://192.168.100.222:8000';
+
+      const response =  await fetch(`${apiUrl}/api/loginUsuario`, {
         method: 'POST',
         body: formData,
       });
 
       const responseData = await response.json();
+
+      if(!responseData.success) {
+        toast('Erro ao fazer login!', {
+          clickClosable: true,
+          duration: 2500,
+          position: "top-center",
+          theme: "failure",
+        });
+
+        return;
+      }
 
       toast('Login feito com sucesso!', {
         clickClosable: true,

@@ -1,16 +1,17 @@
 ion-badge {
     --padding-end: 5px;
     --padding-start: 5px;
-    width: 40px;
+    width: 50px;
     text-align: center;
     margin-right: 5px;
     margin-left: 5px;
+    color: #fff;
 }
 
 .grid-home {
     display: grid;
     height: 100%;
-    grid-template-rows: 17% 75% 8%;
+    grid-template-rows: 20% 70% 10%;
 }
 
 .card-container {
@@ -57,6 +58,40 @@ ion-badge {
     color: #3880ff;
 }
 
+.text-color {
+    color: #fff;
+}
+
 .card-content {
     padding: 0;
+}
+
+.fab-config {
+    position: fixed;
+    bottom: 10%;
+    right: 5%;
+}
+
+.fab-add {
+    position: fixed;
+    bottom: 10%;
+    right: 5%;
+}
+
+.fab-reset {
+    position: fixed;
+    bottom: 10%;
+    right: 5%;
+}
+
+.fab-generate {
+    position: fixed;
+    bottom: 10%;
+    left: 5%;
+}
+
+.fab-save {
+    position: fixed;
+    bottom: 10%;
+    left: 5%;
 }

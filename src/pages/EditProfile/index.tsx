@@ -69,7 +69,9 @@ const EditProfile = () => {
     formData.append("genero", sexo);
 
     try {
-      await fetch("http://localhost:8000/api/atualizarUsuario", {
+      const apiUrl = "http://192.168.100.222:8000";
+
+      await fetch(`${apiUrl}/api/atualizarUsuario`, {
         method: "POST",
         body: formData,
       });
@@ -95,7 +97,9 @@ const EditProfile = () => {
     formData.append("id", id);
 
     try {
-      const response = await fetch("http://localhost:8000/api/pessoa", {
+      const apiUrl = 'http://192.168.100.222:8000';
+      
+      const response = await fetch(`${apiUrl}/api/pessoa`, {
         method: "POST",
         body: formData,
       });

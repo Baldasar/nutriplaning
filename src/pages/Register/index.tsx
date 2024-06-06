@@ -10,9 +10,11 @@ import {
   IonSelectOption,
   IonFab,
   IonFabButton,
+  IonCheckbox,
+  IonList,
   IonIcon,
 } from "@ionic/react";
-import { arrowBack } from "ionicons/icons";
+import { arrowBack, closeCircle } from "ionicons/icons";
 import toast from "react-simple-toasts";
 
 import "./styles.css";
@@ -29,6 +31,9 @@ const Register = () => {
   const [idade, setIdade] = useState<any>(null);
   const [nivelAtividade, setNivelAtividade] = useState<any>(null);
   const [sexo, setSexo] = useState<any>(null);
+  const [hasAlergia, setHasAlergia] = useState(false);
+  const [alergias, setAlergias] = useState<string[]>([]);
+  const [currentAlergia, setCurrentAlergia] = useState("");
 
   const isValidEmail = (email: any) => /\S+@\S+\.\S+/.test(email);
   const isValidInteger = (value: any) => /^\d+$/.test(value);
@@ -99,7 +104,9 @@ const Register = () => {
       formData.append("atividade", nivelAtividade);
       formData.append("genero", sexo);
 
-      await fetch("http://localhost:8000/api/registrarUsuario", {
+      const apiUrl = "http://192.168.100.222:8000";
+      
+      await fetch(`${apiUrl}/api/registrarUsuario`, {
         method: "POST",
         body: formData,
       });
@@ -126,9 +133,20 @@ const Register = () => {
     history.push("/login");
   };
 
+  const handleAlergiaChange = (e: any) => {
+    if (e.key === "Enter" && currentAlergia.trim() !== "") {
+      setAlergias([...alergias, currentAlergia.trim()]);
+      setCurrentAlergia("");
+    }
+  };
+
+  const removeAlergia = (index: number) => {
+    setAlergias(alergias.filter((_, i) => i !== index));
+  };
+
   return (
     <IonContent fullscreen>
-      <IonFab slot="fixed" vertical="top" horizontal="start">
+      <IonFab className="fab-back">
         <IonFabButton onClick={backToLogin}>
           <IonIcon icon={arrowBack}></IonIcon>
         </IonFabButton>
@@ -228,19 +246,9 @@ const Register = () => {
               <IonSelectOption value="1.9">Muito Ativo</IonSelectOption>
             </IonSelect>
           </IonItem>
-          {/* <IonItem>
-            <IonSelect
-              label="Plano Alimentar"
-              placeholder="Selecione"
-            >
-              <IonSelectOption value="1">Onívoro</IonSelectOption>
-              <IonSelectOption value="2">Vegetariano</IonSelectOption>
-              <IonSelectOption value="3">Vegano</IonSelectOption>
-            </IonSelect>
-          </IonItem> */}
           <IonItem>
             <IonSelect
-              value={nivelAtividade}
+              value={sexo}
               onIonChange={(e) => setSexo(e.detail.value!)}
               label="Sexo"
               placeholder="Selecione"
@@ -249,6 +257,56 @@ const Register = () => {
               <IonSelectOption value="f">Feminino</IonSelectOption>
             </IonSelect>
           </IonItem>
+          {/* <IonItem>
+            <IonSelect label="Forma do alimento" placeholder="Selecione">
+              <IonSelectOption value="1">Cozido</IonSelectOption>
+              <IonSelectOption value="2">Cru</IonSelectOption>
+              <IonSelectOption value="3">Congelado</IonSelectOption>
+            </IonSelect>
+          </IonItem> */}
+          {/* <IonItem>
+            <IonSelect label="Plano Alimentar" placeholder="Selecione">
+              <IonSelectOption value="1">Onívoro</IonSelectOption>
+              <IonSelectOption value="2">Vegetariano</IonSelectOption>
+              <IonSelectOption value="3">Vegano</IonSelectOption>
+            </IonSelect>
+          </IonItem> */}
+          {/* <IonItem>
+            <IonCheckbox
+              slot="end"
+              checked={hasAlergia}
+              onIonChange={(e) => setHasAlergia(e.detail.checked)}
+            />
+            <IonLabel>Você tem alguma alergia?</IonLabel>
+          </IonItem> */}
+          {/* {hasAlergia && (
+              <>
+                <IonItem>
+                  <IonInput
+                    label="Alergias"
+                    labelPlacement="floating"
+                    placeholder="Digite uma alergia e aperte Enter"
+                    type="text"
+                    value={currentAlergia}
+                    onIonChange={(e) => setCurrentAlergia(e.detail.value!)}
+                    onKeyPress={handleAlergiaChange}
+                  ></IonInput>
+                </IonItem>
+                <IonList>
+                  {alergias.map((alergia, index) => (
+                    <IonItem key={index}>
+                      <IonLabel>{alergia}</IonLabel>
+                      <IonIcon
+                        icon={closeCircle}
+                        slot="end"
+                        onClick={() => removeAlergia(index)}
+                        style={{ cursor: "pointer" }}
+                      />
+                    </IonItem>
+                  ))}
+                </IonList>
+              </>
+            )} */}
           <IonButton expand="block" onClick={handleRegister}>
             Cadastrar
           </IonButton>
