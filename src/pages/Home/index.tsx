@@ -37,6 +37,7 @@ import { useHistory } from "react-router";
 import LocalStorageHelper from "../../components/LocalStorageHelper";
 
 import "./styles.css";
+import { environment } from "../../environments/environment";
 
 const Home = () => {
   const history = useHistory();
@@ -85,9 +86,7 @@ const Home = () => {
           text: "Sair",
           handler: async () => {
             try {
-              const apiUrl = 'http://192.168.100.222:8000';
-
-              await fetch(`${apiUrl}/api/logoutUsuario`, {
+              await fetch(`${environment.apiUrl}/api/logoutUsuario`, {
                 method: "GET",
               });
             } catch (error) {
@@ -184,9 +183,7 @@ const Home = () => {
       params.append('porcentagem[]', refeicao.inputValue);
     });
 
-    const apiUrl = 'http://192.168.100.222:8000';
-    
-    const response = await fetch(`${apiUrl}/api/gerarRefeicoes`, {
+    const response = await fetch(`${environment.apiUrl}/api/gerarRefeicoes`, {
       method: "POST",
       body: params
     });

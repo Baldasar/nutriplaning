@@ -21,6 +21,7 @@ import LocalStorageHelper from "../../components/LocalStorageHelper";
 import toast from "react-simple-toasts";
 
 import "./styles.css";
+import { environment } from "../../environments/environment";
 
 const EditProfile = () => {
   const history = useHistory();
@@ -69,9 +70,7 @@ const EditProfile = () => {
     formData.append("genero", sexo);
 
     try {
-      const apiUrl = "http://192.168.100.222:8000";
-
-      await fetch(`${apiUrl}/api/atualizarUsuario`, {
+      await fetch(`${environment.apiUrl}/api/atualizarUsuario`, {
         method: "POST",
         body: formData,
       });
@@ -94,12 +93,9 @@ const EditProfile = () => {
 
   const getProfileData = async (id: any) => {
     const formData = new FormData();
-    formData.append("id", id);
-
+    formData.append("id", "12");
     try {
-      const apiUrl = 'http://192.168.100.222:8000';
-      
-      const response = await fetch(`${apiUrl}/api/pessoa`, {
+      const response = await fetch(`${environment.apiUrl}/api/pessoa`, {
         method: "POST",
         body: formData,
       });

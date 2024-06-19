@@ -18,6 +18,7 @@ import { arrowBack, closeCircle } from "ionicons/icons";
 import toast from "react-simple-toasts";
 
 import "./styles.css";
+import { environment } from "../../environments/environment";
 
 const Register = () => {
   const history = useHistory();
@@ -104,9 +105,7 @@ const Register = () => {
       formData.append("atividade", nivelAtividade);
       formData.append("genero", sexo);
 
-      const apiUrl = "http://192.168.100.222:8000";
-      
-      await fetch(`${apiUrl}/api/registrarUsuario`, {
+      await fetch(`${environment.apiUrl}/api/registrarUsuario`, {
         method: "POST",
         body: formData,
       });
@@ -162,7 +161,7 @@ const Register = () => {
       >
         <h2>Cadastro</h2>
         <div style={{ width: "90%", maxWidth: "500px" }}>
-          <IonItem>
+          {/* <IonItem>
             <IonInput
               label="Nome"
               labelPlacement="floating"
@@ -246,6 +245,7 @@ const Register = () => {
               <IonSelectOption value="1.9">Muito Ativo</IonSelectOption>
             </IonSelect>
           </IonItem>
+          
           <IonItem>
             <IonSelect
               value={sexo}
@@ -256,57 +256,58 @@ const Register = () => {
               <IonSelectOption value="m">Masculino</IonSelectOption>
               <IonSelectOption value="f">Feminino</IonSelectOption>
             </IonSelect>
-          </IonItem>
-          {/* <IonItem>
+          </IonItem> */}
+
+          <IonItem>
             <IonSelect label="Forma do alimento" placeholder="Selecione">
               <IonSelectOption value="1">Cozido</IonSelectOption>
               <IonSelectOption value="2">Cru</IonSelectOption>
               <IonSelectOption value="3">Congelado</IonSelectOption>
             </IonSelect>
-          </IonItem> */}
-          {/* <IonItem>
+          </IonItem>
+          <IonItem>
             <IonSelect label="Plano Alimentar" placeholder="Selecione">
               <IonSelectOption value="1">Onívoro</IonSelectOption>
               <IonSelectOption value="2">Vegetariano</IonSelectOption>
               <IonSelectOption value="3">Vegano</IonSelectOption>
             </IonSelect>
-          </IonItem> */}
-          {/* <IonItem>
+          </IonItem>
+          <IonItem>
             <IonCheckbox
               slot="end"
               checked={hasAlergia}
               onIonChange={(e) => setHasAlergia(e.detail.checked)}
             />
             <IonLabel>Você tem alguma alergia?</IonLabel>
-          </IonItem> */}
-          {/* {hasAlergia && (
-              <>
-                <IonItem>
-                  <IonInput
-                    label="Alergias"
-                    labelPlacement="floating"
-                    placeholder="Digite uma alergia e aperte Enter"
-                    type="text"
-                    value={currentAlergia}
-                    onIonChange={(e) => setCurrentAlergia(e.detail.value!)}
-                    onKeyPress={handleAlergiaChange}
-                  ></IonInput>
-                </IonItem>
-                <IonList>
-                  {alergias.map((alergia, index) => (
-                    <IonItem key={index}>
-                      <IonLabel>{alergia}</IonLabel>
-                      <IonIcon
-                        icon={closeCircle}
-                        slot="end"
-                        onClick={() => removeAlergia(index)}
-                        style={{ cursor: "pointer" }}
-                      />
-                    </IonItem>
-                  ))}
-                </IonList>
-              </>
-            )} */}
+          </IonItem>
+          {hasAlergia && (
+            <>
+              <IonItem>
+                <IonInput
+                  label="Alergias"
+                  labelPlacement="floating"
+                  placeholder="Digite uma alergia e aperte Enter"
+                  type="text"
+                  value={currentAlergia}
+                  onIonChange={(e) => setCurrentAlergia(e.detail.value!)}
+                  onKeyPress={handleAlergiaChange}
+                ></IonInput>
+              </IonItem>
+              <IonList>
+                {alergias.map((alergia, index) => (
+                  <IonItem key={index}>
+                    <IonLabel>{alergia}</IonLabel>
+                    <IonIcon
+                      icon={closeCircle}
+                      slot="end"
+                      onClick={() => removeAlergia(index)}
+                      style={{ cursor: "pointer" }}
+                    />
+                  </IonItem>
+                ))}
+              </IonList>
+            </>
+          )}
           <IonButton expand="block" onClick={handleRegister}>
             Cadastrar
           </IonButton>

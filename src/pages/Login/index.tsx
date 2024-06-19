@@ -14,6 +14,7 @@ import toast from "react-simple-toasts";
 import LocalStorageHelper from "../../components/LocalStorageHelper";
 
 import "./styles.css";
+import { environment } from "../../environments/environment";
 
 const Login = () => {
   const version = packageJson.version;
@@ -35,9 +36,7 @@ const Login = () => {
       formData.append("senha", senha);
       formData.append("id_pessoa", "2");
 
-      const apiUrl = 'http://192.168.100.222:8000';
-
-      const response =  await fetch(`${apiUrl}/api/loginUsuario`, {
+      const response =  await fetch(`${environment.apiUrl}/api/loginUsuario`, {
         method: 'POST',
         body: formData,
       });
