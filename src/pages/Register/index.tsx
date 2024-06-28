@@ -14,7 +14,7 @@ import {
   IonList,
   IonIcon,
 } from "@ionic/react";
-import { arrowBack, closeCircle } from "ionicons/icons";
+import { arrowBack } from "ionicons/icons";
 import toast from "react-simple-toasts";
 
 import "./styles.css";
@@ -32,12 +32,48 @@ const Register = () => {
   const [idade, setIdade] = useState<any>(null);
   const [nivelAtividade, setNivelAtividade] = useState<any>(null);
   const [sexo, setSexo] = useState<any>(null);
-  const [hasAlergia, setHasAlergia] = useState(false);
-  const [alergias, setAlergias] = useState<string[]>([]);
-  const [currentAlergia, setCurrentAlergia] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState([
+    "Cereais e derivados",
+    "Verduras, hortaliças e derivados",
+    "Frutas e derivados",
+    "Gorduras e óleos",
+    "Pescados e frutos do mar",
+    "Carnes e derivados",
+    "Leite e derivados",
+    "Bebidas (alcoólicas e não alcoólicas)",
+    "Ovos e derivados",
+    "Produtos açucarados",
+    "Miscelâneas",
+    "Outros alimentos industrializados",
+    "Alimentos preparados",
+    "Leguminosas e derivados",
+    "Nozes e sementes",
+  ]);
 
   const isValidEmail = (email: any) => /\S+@\S+\.\S+/.test(email);
   const isValidInteger = (value: any) => /^\d+$/.test(value);
+
+  const categories = [
+    "Cereais e derivados",
+    "Verduras, hortaliças e derivados",
+    "Frutas e derivados",
+    "Gorduras e óleos",
+    "Pescados e frutos do mar",
+    "Carnes e derivados",
+    "Leite e derivados",
+    "Bebidas (alcoólicas e não alcoólicas)",
+    "Ovos e derivados",
+    "Produtos açucarados",
+    "Miscelâneas",
+    "Outros alimentos industrializados",
+    "Alimentos preparados",
+    "Leguminosas e derivados",
+    "Nozes e sementes",
+  ];
+
+  const handleSelectionChange = (event: any) => {
+    setSelectedCategories(event.detail.value);
+  };
 
   const handleRegister = async () => {
     if (
@@ -95,20 +131,37 @@ const Register = () => {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("nome", nome);
-      formData.append("email", email);
-      formData.append("senha", senha);
-      formData.append("altura", altura);
-      formData.append("peso", peso);
-      formData.append("idade", idade);
-      formData.append("atividade", nivelAtividade);
-      formData.append("genero", sexo);
+      const body = {
+        nome: nome,
+        email: email,
+        senha: senha,
+        altura: parseInt(altura),
+        peso: parseInt(peso),
+        idade: parseInt(idade),
+        genero: sexo,
+        atividade: parseFloat(nivelAtividade),
+        black_list: categories.filter(
+          (category) => !selectedCategories.includes(category)
+        ),
+        debug: true,
+      };
 
-      await fetch(`${environment.apiUrl}/api/registrarUsuario`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `${environment.apiUrl}api/registrarUsuario`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      const responseData = await response.json();
+
+      if (!responseData.success) {
+        throw new Error("Falha ao cadastrar usuário!");
+      }
 
       toast("Usuário cadastrado com sucesso!", {
         clickClosable: true,
@@ -132,17 +185,6 @@ const Register = () => {
     history.push("/login");
   };
 
-  const handleAlergiaChange = (e: any) => {
-    if (e.key === "Enter" && currentAlergia.trim() !== "") {
-      setAlergias([...alergias, currentAlergia.trim()]);
-      setCurrentAlergia("");
-    }
-  };
-
-  const removeAlergia = (index: number) => {
-    setAlergias(alergias.filter((_, i) => i !== index));
-  };
-
   return (
     <IonContent fullscreen>
       <IonFab className="fab-back">
@@ -161,7 +203,7 @@ const Register = () => {
       >
         <h2>Cadastro</h2>
         <div style={{ width: "90%", maxWidth: "500px" }}>
-          {/* <IonItem>
+          <IonItem>
             <IonInput
               label="Nome"
               labelPlacement="floating"
@@ -245,7 +287,23 @@ const Register = () => {
               <IonSelectOption value="1.9">Muito Ativo</IonSelectOption>
             </IonSelect>
           </IonItem>
-          
+
+          <IonItem>
+            <IonSelect
+              label="Categorias"
+              placeholder="Selecione"
+              multiple={true}
+              onIonChange={handleSelectionChange}
+              value={selectedCategories}
+            >
+              {categories.map((category, index) => (
+                <IonSelectOption key={index} value={category}>
+                  {category}
+                </IonSelectOption>
+              ))}
+            </IonSelect>
+          </IonItem>
+
           <IonItem>
             <IonSelect
               value={sexo}
@@ -256,58 +314,7 @@ const Register = () => {
               <IonSelectOption value="m">Masculino</IonSelectOption>
               <IonSelectOption value="f">Feminino</IonSelectOption>
             </IonSelect>
-          </IonItem> */}
-
-          <IonItem>
-            <IonSelect label="Forma do alimento" placeholder="Selecione">
-              <IonSelectOption value="1">Cozido</IonSelectOption>
-              <IonSelectOption value="2">Cru</IonSelectOption>
-              <IonSelectOption value="3">Congelado</IonSelectOption>
-            </IonSelect>
           </IonItem>
-          <IonItem>
-            <IonSelect label="Plano Alimentar" placeholder="Selecione">
-              <IonSelectOption value="1">Onívoro</IonSelectOption>
-              <IonSelectOption value="2">Vegetariano</IonSelectOption>
-              <IonSelectOption value="3">Vegano</IonSelectOption>
-            </IonSelect>
-          </IonItem>
-          <IonItem>
-            <IonCheckbox
-              slot="end"
-              checked={hasAlergia}
-              onIonChange={(e) => setHasAlergia(e.detail.checked)}
-            />
-            <IonLabel>Você tem alguma alergia?</IonLabel>
-          </IonItem>
-          {hasAlergia && (
-            <>
-              <IonItem>
-                <IonInput
-                  label="Alergias"
-                  labelPlacement="floating"
-                  placeholder="Digite uma alergia e aperte Enter"
-                  type="text"
-                  value={currentAlergia}
-                  onIonChange={(e) => setCurrentAlergia(e.detail.value!)}
-                  onKeyPress={handleAlergiaChange}
-                ></IonInput>
-              </IonItem>
-              <IonList>
-                {alergias.map((alergia, index) => (
-                  <IonItem key={index}>
-                    <IonLabel>{alergia}</IonLabel>
-                    <IonIcon
-                      icon={closeCircle}
-                      slot="end"
-                      onClick={() => removeAlergia(index)}
-                      style={{ cursor: "pointer" }}
-                    />
-                  </IonItem>
-                ))}
-              </IonList>
-            </>
-          )}
           <IonButton expand="block" onClick={handleRegister}>
             Cadastrar
           </IonButton>

@@ -22,8 +22,8 @@ const Login = () => {
 
   const { getItem, setItem } = LocalStorageHelper();
 
-  const [email, setEmail] = useState("lucaspaquelin@gmail.com");
-  const [senha, setSenha] = useState("123456");
+  const [email, setEmail] = useState<any>(null);
+  const [senha, setSenha] = useState<any>(null);
 
   const handleLogin = async () => {
     if (!email || !senha) {
@@ -31,30 +31,26 @@ const Login = () => {
     }
 
     try {
-      const formData = new FormData();
-      formData.append("email", email);
-      formData.append("senha", senha);
-      formData.append("id_pessoa", "2");
+      const body = {
+        email: email,
+        senha: senha,
+      };
 
-      const response =  await fetch(`${environment.apiUrl}/api/loginUsuario`, {
-        method: 'POST',
-        body: formData,
+      const response = await fetch(`${environment.apiUrl}api/loginUsuario`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
       });
 
       const responseData = await response.json();
 
-      if(!responseData.success) {
-        toast('Erro ao fazer login!', {
-          clickClosable: true,
-          duration: 2500,
-          position: "top-center",
-          theme: "failure",
-        });
-
-        return;
+      if (!responseData.success) {
+        throw new Error("Falha ao fazer login");
       }
 
-      toast('Login feito com sucesso!', {
+      toast("Login feito com sucesso!", {
         clickClosable: true,
         duration: 2500,
         position: "top-center",
@@ -65,7 +61,7 @@ const Login = () => {
 
       history.push("/home");
     } catch (error) {
-      toast('Erro ao fazer login!', {
+      toast("Erro ao fazer login!", {
         clickClosable: true,
         duration: 2500,
         position: "top-center",

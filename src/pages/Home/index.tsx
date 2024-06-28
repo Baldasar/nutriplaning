@@ -35,7 +35,7 @@ import {
 } from "ionicons/icons";
 import { useHistory } from "react-router";
 import LocalStorageHelper from "../../components/LocalStorageHelper";
-
+import toast from "react-simple-toasts";
 import "./styles.css";
 import { environment } from "../../environments/environment";
 
@@ -85,16 +85,8 @@ const Home = () => {
         {
           text: "Sair",
           handler: async () => {
-            try {
-              await fetch(`${environment.apiUrl}/api/logoutUsuario`, {
-                method: "GET",
-              });
-            } catch (error) {
-              console.error(error);
-            } finally {
-              clear();
-              history.push("/");
-            }
+            clear();
+            history.push("/");
           },
         },
       ],
@@ -118,17 +110,76 @@ const Home = () => {
   };
 
   const gerarRefeicoesParcial = async () => {
+    setLoading(true);
+    const porcentagens = JSON.parse(getItem("porcentagem"));
     const selectedIds: any = [];
 
-    refeicoesGeradas.forEach((refeicao: any) => {
-      refeicao.comidas.forEach((comida: any) => {
-        if (comida.selecionado) {
-          selectedIds.push(comida.id);
-        }
+    const body = {
+      id_usuario: userId,
+      refeicoes: selectedIds,
+    };
+
+    refeicoesGeradas.forEach((refeicao: any, i: any) => {
+      const alimentosSelecionados = refeicao.comidas
+        .filter((comida: any) => !comida.selecionado)
+        .reduce((obj: any, comida: any) => {
+          obj[comida.id] = parseInt(comida.quantidade);
+          return obj;
+        }, {});
+
+      selectedIds.push({
+        porcentagem: porcentagens[i],
+        alimentos: alimentosSelecionados,
       });
     });
 
-    console.log(selectedIds);
+    try {
+      const response = await fetch(
+        `${environment.apiUrl}api/regenerar-refeicoes`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      const responseData = await response.json();
+
+      if (!responseData.success) {
+        throw new Error("Falha ao gerar refeições");
+      }
+
+      console.log(responseData);
+
+      setToggleEdit(false);
+
+      const { ref, totais } = transformarDados(responseData);
+
+      setTotalCalorias(Number(totais.calorias));
+      setTotalCarboidrato(Number(totais.carboidrato));
+      setTotalProteina(Number(totais.proteina));
+      setTotalGordura(Number(totais.gordura));
+
+      setTimeout(() => {
+        setRefeicoesGeradas(ref);
+        setItem("refeicoesGeradas", JSON.stringify(ref));
+        setItem("totais", JSON.stringify(totais));
+      }, 1000);
+
+      setTimeout(() => {
+        setLoading(false);
+        setToggleEdit(false);
+      }, 2000);
+    } catch (error) {
+      toast("Erro ao gerar refeições!", {
+        clickClosable: true,
+        duration: 2500,
+        position: "top-center",
+        theme: "failure",
+      });
+    }
   };
 
   const transformarDados = (res: any) => {
@@ -138,7 +189,7 @@ const Home = () => {
 
     const resultado: any = [];
 
-    let caloriasTotais = res.base_atividade
+    let caloriasTotais = res.base_atividade;
     let carboidratoTotais = res.macros_necessarios.carboidrato;
     let proteinaTotais = res.macros_necessarios.proteina;
     let gorduraTotais = res.macros_necessarios.lipideos;
@@ -166,7 +217,12 @@ const Home = () => {
 
     return {
       ref: resultado,
-      totais: { calorias: caloriasTotais.toFixed(2), carboidrato: carboidratoTotais.toFixed(2), proteina: proteinaTotais.toFixed(2), gordura: gorduraTotais.toFixed(2)},
+      totais: {
+        calorias: caloriasTotais.toFixed(2),
+        carboidrato: carboidratoTotais.toFixed(2),
+        proteina: proteinaTotais.toFixed(2),
+        gordura: gorduraTotais.toFixed(2),
+      },
     };
   };
 
@@ -174,38 +230,54 @@ const Home = () => {
     setLoading(true);
     setRefeicoes([]);
 
-    const params = new FormData();
-    params.append('id_pessoa', "12");
-    params.append('email', 'lucaspaquelin@gmail.com');
-    params.append('senha', '123456');
+    const body = {
+      id_usuario: userId,
+      porcentagem: refeicoes.map((refeicao: any) => refeicao.inputValue),
+    };
 
-    refeicoes.forEach((refeicao: any) => {
-      params.append('porcentagem[]', refeicao.inputValue);
-    });
+    try {
+      const response = await fetch(`${environment.apiUrl}api/gerarRefeicoes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
 
-    const response = await fetch(`${environment.apiUrl}/api/gerarRefeicoes`, {
-      method: "POST",
-      body: params
-    });
+      const responseData = await response.json();
 
-    const res = await response.json();
+      if (!responseData.success) {
+        throw new Error("Falha ao gerar refeições");
+      }
 
-    const { ref, totais } = transformarDados(res);
+      const { ref, totais } = transformarDados(responseData);
 
-    setTotalCalorias(Number(totais.calorias));
-    setTotalCarboidrato(Number(totais.carboidrato));
-    setTotalProteina(Number(totais.proteina));
-    setTotalGordura(Number(totais.gordura));
+      setTotalCalorias(Number(totais.calorias));
+      setTotalCarboidrato(Number(totais.carboidrato));
+      setTotalProteina(Number(totais.proteina));
+      setTotalGordura(Number(totais.gordura));
 
-    setTimeout(() => {
-      setRefeicoesGeradas(ref);
-      setItem("refeicoesGeradas", JSON.stringify(ref));
-      setItem("totais", JSON.stringify(totais));
-    }, 1000);
+      setTimeout(() => {
+        setRefeicoesGeradas(ref);
+        setItem("refeicoesGeradas", JSON.stringify(ref));
+        setItem("totais", JSON.stringify(totais));
+        setItem(
+          "porcentagem",
+          JSON.stringify(refeicoes.map((refeicao: any) => refeicao.inputValue))
+        );
+      }, 1000);
 
-    setTimeout(() => {
-      setLoading(false);
-    }, 2000);
+      setTimeout(() => {
+        setLoading(false);
+      }, 2000);
+    } catch (error) {
+      toast("Erro ao gerar refeições!", {
+        clickClosable: true,
+        duration: 2500,
+        position: "top-center",
+        theme: "failure",
+      });
+    }
   };
 
   const resetRefeicoes = () => {
@@ -240,7 +312,7 @@ const Home = () => {
     setTimeout(() => {
       const element = document.querySelector(".card-container");
       element?.scrollTo(0, element.scrollHeight);
-    },200);
+    }, 200);
   };
 
   const handleRemoveRefeicao = (id: number) => {
@@ -474,13 +546,15 @@ const Home = () => {
                                 className="badge-item"
                                 color={"success"}
                               >
-                                {comida.carboidrato}
+                                {comida.carboidrato > 0
+                                  ? comida.carboidrato
+                                  : 0}
                               </IonBadge>
                               <IonBadge className="badge-item">
-                                {comida.proteina}
+                                {comida.proteina > 0 ? comida.proteina : 0}
                               </IonBadge>
                               <IonBadge className="badge-item" color={"danger"}>
-                                {comida.gordura}
+                                {comida.gordura > 0 ? comida.gordura : 0}
                               </IonBadge>
                             </div>
                           )}

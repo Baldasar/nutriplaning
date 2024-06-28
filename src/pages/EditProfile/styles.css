@@ -15,3 +15,7 @@
     width: 90%;
     margin: 0 5%;
 }
+
+ion-select {
+    width: 200px;
+}

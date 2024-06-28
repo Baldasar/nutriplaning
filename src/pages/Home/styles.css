@@ -11,7 +11,7 @@ ion-badge {
 .grid-home {
     display: grid;
     height: 100%;
-    grid-template-rows: 20% 70% 10%;
+    grid-template-rows: 17% 73% 10%;
 }
 
 .card-container {
@@ -94,4 +94,12 @@ ion-badge {
     position: fixed;
     bottom: 10%;
     left: 5%;
+}
+
+.segment-container {
+    height: 100%;
+}
+
+ion-segment {
+    height: 100%;
 }

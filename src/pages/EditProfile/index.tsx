@@ -30,17 +30,56 @@ const EditProfile = () => {
 
   const { getItem } = LocalStorageHelper();
 
+  const [userId, setUserId] = useState<any>(null);
   const [selectedSegment, setSelectedSegment] = useState<any>("1");
 
-  const [isSaveButtonEnabled, setIsSaveButtonEnabled] = useState(false);
-
   const [loading, setLoading] = useState(true);
-  const [initialData, setInitialData] = useState<any>({});
   const [altura, setAltura] = useState<any>(null);
   const [peso, setPeso] = useState<any>(null);
   const [idade, setIdade] = useState<any>(null);
   const [nivelAtividade, setNivelAtividade] = useState<any>(null);
   const [sexo, setSexo] = useState<any>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([
+    "Cereais e derivados",
+    "Verduras, hortaliças e derivados",
+    "Frutas e derivados",
+    "Gorduras e óleos",
+    "Pescados e frutos do mar",
+    "Carnes e derivados",
+    "Leite e derivados",
+    "Bebidas (alcoólicas e não alcoólicas)",
+    "Ovos e derivados",
+    "Produtos açucarados",
+    "Miscelâneas",
+    "Outros alimentos industrializados",
+    "Alimentos preparados",
+    "Leguminosas e derivados",
+    "Nozes e sementes",
+  ]);
+
+  const isValidInteger = (value: any) => /^\d+$/.test(value);
+
+  const categories = [
+    "Cereais e derivados",
+    "Verduras, hortaliças e derivados",
+    "Frutas e derivados",
+    "Gorduras e óleos",
+    "Pescados e frutos do mar",
+    "Carnes e derivados",
+    "Leite e derivados",
+    "Bebidas (alcoólicas e não alcoólicas)",
+    "Ovos e derivados",
+    "Produtos açucarados",
+    "Miscelâneas",
+    "Outros alimentos industrializados",
+    "Alimentos preparados",
+    "Leguminosas e derivados",
+    "Nozes e sementes",
+  ];
+
+  const handleSelectionChange = (event: any) => {
+    setSelectedCategories(event.detail.value);
+  };
 
   const handleSegmentChange = (value: any) => {
     setSelectedSegment(value);
@@ -59,21 +98,60 @@ const EditProfile = () => {
   };
 
   const handleSave = async () => {
-    const userId = getItem("userId");
+    if (!altura || !peso || !idade || !nivelAtividade || !sexo) {
+      toast("Preencha todos os campos!", {
+        clickClosable: true,
+        duration: 2500,
+        position: "top-center",
+        theme: "warning",
+      });
+      return;
+    }
 
-    const formData = new FormData();
-    formData.append("id", userId);
-    formData.append("altura", altura);
-    formData.append("peso", peso);
-    formData.append("idade", idade);
-    formData.append("atividade", nivelAtividade);
-    formData.append("genero", sexo);
+    if (
+      !isValidInteger(altura) ||
+      !isValidInteger(peso) ||
+      !isValidInteger(idade)
+    ) {
+      toast("Altura, peso e idade devem ser números inteiros!", {
+        clickClosable: true,
+        duration: 2500,
+        position: "top-center",
+        theme: "warning",
+      });
+      return;
+    }
+
+    const body = {
+      id_usuario: userId,
+      altura: parseFloat(altura),
+      peso: parseFloat(peso),
+      genero: sexo,
+      idade: parseInt(idade),
+      atividade: parseFloat(nivelAtividade),
+      black_list: categories.filter(
+        (category) => !selectedCategories.includes(category)
+      ),
+      debug: true,
+    };
 
     try {
-      await fetch(`${environment.apiUrl}/api/atualizarUsuario`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `${environment.apiUrl}api/atualizar-usuario`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      const responseData = await response.json();
+
+      if (!responseData.success) {
+        throw new Error("Falha ao atualizar perfil!");
+      }
 
       toast("Perfil atualizado com sucesso!", {
         clickClosable: true,
@@ -92,31 +170,36 @@ const EditProfile = () => {
   };
 
   const getProfileData = async (id: any) => {
-    const formData = new FormData();
-    formData.append("id", "12");
     try {
-      const response = await fetch(`${environment.apiUrl}/api/pessoa`, {
+      const body = {
+        id_usuario: id,
+      };
+
+      const response = await fetch(`${environment.apiUrl}api/pessoa`, {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
       });
 
-      const responseData = await response.json();
+      const pessoaData = await response.json();
 
-      setAltura("" + responseData.pessoa.altura);
-      setPeso("" + responseData.pessoa.peso);
-      setIdade("" + responseData.pessoa.idade);
-      setNivelAtividade("" + responseData.pessoa.atividadeFisica);
-      setSexo("" + responseData.pessoa.genero);
+      if (!pessoaData.success) {
+        throw new Error("Falha ao obter dados da pessoa");
+      }
 
-      setInitialData({
-        altura: responseData.pessoa.altura,
-        peso: responseData.pessoa.peso,
-        idade: responseData.pessoa.idade,
-        nivelAtividade: responseData.pessoa.atividadeFisica,
-        sexo: responseData.pessoa.genero,
-      });
+      const pessoa = pessoaData.pessoa;
+
+      setAltura("" + pessoa.altura);
+      setPeso("" + pessoa.peso);
+      setIdade("" + pessoa.idade);
+      setNivelAtividade("" + pessoa.atividadeFisica);
+      setSexo("" + pessoa.genero);
+      setSelectedCategories(
+        selectedCategories.filter((cat) => !pessoa.blackList.includes(cat))
+      );
     } catch (error) {
-      console.error(error);
       presentAlert({
         header: "Erro",
         message:
@@ -136,19 +219,8 @@ const EditProfile = () => {
   };
 
   useEffect(() => {
-    const hasChanged =
-      altura != initialData.altura ||
-      peso != initialData.peso ||
-      idade != initialData.idade ||
-      nivelAtividade != initialData.nivelAtividade ||
-      sexo != initialData.sexo;
-
-    setIsSaveButtonEnabled(hasChanged);
-  }, [altura, peso, idade, nivelAtividade, sexo]);
-
-  useEffect(() => {
     const userId = getItem("userId");
-
+    setUserId(userId);
     getProfileData(userId);
   }, []);
 
@@ -207,6 +279,21 @@ const EditProfile = () => {
               </IonItem>
               <IonItem>
                 <IonSelect
+                  label="Categorias"
+                  placeholder="Selecione"
+                  multiple={true}
+                  onIonChange={handleSelectionChange}
+                  value={selectedCategories}
+                >
+                  {categories.map((category, index) => (
+                    <IonSelectOption key={index} value={category}>
+                      {category}
+                    </IonSelectOption>
+                  ))}
+                </IonSelect>
+              </IonItem>
+              <IonItem>
+                <IonSelect
                   label="Sexo"
                   value={sexo}
                   placeholder="Selecione"
@@ -216,11 +303,7 @@ const EditProfile = () => {
                   <IonSelectOption value="f">Feminino</IonSelectOption>
                 </IonSelect>
               </IonItem>
-              <IonButton
-                expand="block"
-                onClick={handleSave}
-                disabled={!isSaveButtonEnabled}
-              >
+              <IonButton expand="block" onClick={handleSave}>
                 Salvar
               </IonButton>
             </IonCardContent>
