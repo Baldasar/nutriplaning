@@ -1,0 +1,1 @@
+Projeto criado para a disciplina de Projeto Integrador II. O conteúdo do app consiste em um aplicativo que monta refeições prontas de acordo com as necessidades do usuário, com base em suas informações e preferências (peso, altura, sexo, plano alimentar, alergias, nível de atividade física).
