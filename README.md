@@ -26,6 +26,7 @@ export const environment = {
 };  
 
 3️⃣ Execute o projeto
+
 Instale as dependências:
 npm install
 
