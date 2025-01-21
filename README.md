@@ -10,7 +10,7 @@ Nível de atividade física
 
 🚀 Como executar o projeto
 1️⃣ Clone e configure a API
-Acesse o repositório da API: API Nutriplaning.
+Acesse o repositório da API: https://github.com/Baldasar/api-nutriplaning
 Siga as instruções do repositório para executar a API localmente.
 
 2️⃣ Configure o front-end
